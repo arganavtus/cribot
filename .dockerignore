@@ -2,3 +2,10 @@ venv/
 .idea/
 cache/
 README.MD
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.log
+.env
+.git

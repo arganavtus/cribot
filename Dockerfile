@@ -10,10 +10,10 @@ ENV POETRY_VERSION=1.7.1
 RUN curl -sSL https://install.python-poetry.org | python3 -
 ENV PATH="/root/.local/bin:$PATH"
 
-WORKDIR /usr/src/app/bot
+WORKDIR /usr/src/app/cribot
 
-COPY requirements.txt /usr/src/app/bot
+COPY pyproject.toml poetry.lock /usr/src/app/cribot
 
-RUN pip install -r /usr/src/app/bot/requirements.txt
+RUN poetry config virtualenvs.create false && poetry install --no-root --only main
 
-COPY . /usr/src/app/bot
+COPY . /usr/src/app/cribot
