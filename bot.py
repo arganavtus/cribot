@@ -1,17 +1,21 @@
-import logging
 import asyncio
+import logging
 import betterlogging as bl
-from aiogram import Bot, Dispatcher
 
-from settings.declarations import settings
-from services import broadcaster
-from handlers import routers_list
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
+from redis.asyncio.client import Redis
+
+from config import Settings as Settings
+
+settings = Settings()
 
 
-async def on_startup(bot: Bot, admin_ids: list[int]):
-    await broadcaster.broadcast(bot, admin_ids, "Бот був запущений")
+async def on_startup(bot, admins):
+    # await bot.set_webhook(WEBHOOK_URL)
+    print(f"Webhook установлен")
 
 
 def setup_logging():
@@ -40,14 +44,20 @@ def setup_logging():
     logger.info("Starting bot")
 
 
-def get_storage():
+def get_storage(config):
     """
+    Return storage based on the provided configuration.
+
+    Args:
+        config (Config): The configuration object.
+
     Returns:
         Storage: The storage object based on the configuration.
+
     """
     if settings.TGBot.USE_REDIS:
         return RedisStorage.from_url(
-            settings.Redis.DSN,
+            config.redis.dsn(),
             key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
         )
     else:
@@ -56,12 +66,12 @@ def get_storage():
 
 async def main():
     setup_logging()
-    storage = get_storage()
 
-    bot = Bot(token=settings.TGBot.TGBOT_TOKEN, parse_mode="HTML")
+    storage = get_storage(settings)
+
+    bot = Bot(token=settings.TGBot.TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
     dp = Dispatcher(storage=storage)
 
-    dp.include_routers(*routers_list)
 
     await on_startup(bot, settings.TGBot.ADMINS)
     await dp.start_polling(bot)
